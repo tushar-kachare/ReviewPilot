@@ -1,4 +1,3 @@
-// src/github/app.js
 require('dotenv').config();
 const { App } = require('@octokit/app');
 const fs = require('fs');

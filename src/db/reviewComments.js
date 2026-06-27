@@ -11,6 +11,9 @@ const pool = require('./pool');
  * tune based on observed false positive/negative rates.
  */
 async function findSimilarComments({ repositoryId, filePath, embedding, threshold = 0.2, limit = 3 }) {
+  // WHERE does the actual filtering (repo + file + under threshold).
+  // ORDER BY/LIMIT just pick the most useful matches to return — orchestrator
+  // only checks similar.length > 0, so these don't affect the dedup decision.
   const { rows } = await pool.query(
     `SELECT id, body, severity, file_path, line_number,
             embedding <=> $1 AS distance
@@ -20,7 +23,7 @@ async function findSimilarComments({ repositoryId, filePath, embedding, threshol
        AND embedding <=> $1 < $4
      ORDER BY distance ASC
      LIMIT $5`,
-    [JSON.stringify(embedding), repositoryId, filePath, threshold, limit]
+    [JSON.stringify(embedding), repositoryId, filePath, threshold, limit] // embedding stringified for pgvector
   );
   return rows;
 }
@@ -35,6 +38,8 @@ async function saveComment({
   embedding,
   githubCommentId = null,
 }) {
+  // plain insert, no upsert — every posted comment is a new row.
+  // runs AFTER postInlineComment in the orchestrator (the post-before-save bug spot)
   const { rows } = await pool.query(
     `INSERT INTO review_comments
        (repository_id, pull_request_id, file_path, line_number, severity, body, embedding, github_comment_id)

@@ -1,4 +1,3 @@
-// src/ai/embeddings.js
 const { embeddingModel } = require('./geminiClient');
  
 /**

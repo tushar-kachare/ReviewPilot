@@ -1,5 +1,3 @@
-// src/utils/formatComment.js
-
 const SEVERITY_EMOJI = {
   critical: '🔴',
   major: '🟠',
